@@ -1,30 +1,54 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gaia_mobile/models/product.dart';
+import 'package:gaia_mobile/pages/product_page.dart';
+import 'package:gaia_mobile/services/product_api.dart';
 
-import 'package:gaia_mobile/main.dart';
+class _FakeProductApi extends ProductApi {
+  @override
+  Future<List<Product>> fetchProducts() async => const [
+        Product(
+          id: 1,
+          title: 'Vintage jacket',
+          description: 'A lovely second-hand jacket.',
+          price: 150000,
+          condition: 'good',
+          categoryName: 'Outerwear',
+          sellerName: 'gaia-seller',
+          imageUrl: null,
+        ),
+      ];
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('catalog loads API products and opens product detail',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: ProductPage(api: _FakeProductApi()))),
+    );
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.text('Vintage jacket'), findsOneWidget);
+    expect(find.text('Rp150.000'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    await tester.tap(find.text('Vintage jacket'));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Detail Produk'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('A lovely second-hand jacket.'), findsOneWidget);
+    expect(find.text('Dijual oleh gaia-seller'), findsOneWidget);
+  });
+
+  testWidgets('catalog search filters products', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: ProductPage(api: _FakeProductApi()))),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'not found');
+    await tester.pumpAndSettle();
+
+    expect(find.text('Produk tidak ditemukan.'), findsOneWidget);
   });
 }
