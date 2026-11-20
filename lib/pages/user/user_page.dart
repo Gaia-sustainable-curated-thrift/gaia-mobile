@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
 
+import '../../services/user_session.dart';
+
 void openUserPage(BuildContext context, Widget page) {
   Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
 }
 
-/// Shared scrollable layout for the checkpoint 1 account screens.
+/// Shared scrollable layout for connected account screens.
 class UserPage extends StatelessWidget {
-  const UserPage({super.key, this.title, required this.children});
+  const UserPage({
+    super.key,
+    this.title,
+    required this.children,
+    this.requiresLogin = false,
+  });
 
   final String? title;
   final List<Widget> children;
+  final bool requiresLogin;
 
   @override
   Widget build(BuildContext context) {
+    final signedIn = UserScope.of(context).user != null;
     final content = SafeArea(
       child: Align(
         alignment: Alignment.topCenter,
@@ -21,17 +30,17 @@ class UserPage extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Text(
-                    'Pratinjau modul User · Checkpoint 1\n'
-                    'Belum terhubung ke akun. Data tidak dikirim atau disimpan.',
-                  ),
+              if (requiresLogin && !signedIn) ...[
+                const Text(
+                  'Sesi berakhir. Masuk melalui tab Akun untuk melanjutkan.',
                 ),
-              ),
-              const SizedBox(height: 20),
-              ...children,
+                TextButton(
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
+                  child: const Text('Kembali ke Akun'),
+                ),
+              ] else
+                ...children,
             ],
           ),
         ),
@@ -52,17 +61,23 @@ class AccountField extends StatelessWidget {
     this.secret = false,
     this.keyboardType,
     this.enabled = true,
+    this.controller,
+    this.validator,
   });
 
   final String label;
   final bool secret;
   final TextInputType? keyboardType;
   final bool enabled;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 16),
     child: TextFormField(
+      controller: controller,
+      validator: validator,
       enabled: enabled,
       obscureText: secret,
       autocorrect: !secret,

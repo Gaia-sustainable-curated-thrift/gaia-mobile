@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/product.dart';
 import '../services/product_api.dart';
+import '../services/user_session.dart';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key, this.api});
@@ -222,7 +223,13 @@ class ProductDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail Produk')),
+      appBar: AppBar(
+        title: const Text('Detail Produk'),
+        actions: [
+          if (UserScope.maybeOf(context) != null)
+            _SaveProductButton(productId: product.id),
+        ],
+      ),
       body: ListView(
         children: [
           AspectRatio(
@@ -277,6 +284,55 @@ class ProductDetailPage extends StatelessWidget {
       ),
     );
   }
+}
+
+class _SaveProductButton extends StatefulWidget {
+  const _SaveProductButton({required this.productId});
+  final int productId;
+
+  @override
+  State<_SaveProductButton> createState() => _SaveProductButtonState();
+}
+
+class _SaveProductButtonState extends State<_SaveProductButton> {
+  bool _busy = false;
+
+  Future<void> _save() async {
+    final session = UserScope.of(context);
+    if (session.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Masuk melalui tab Akun untuk menyimpan produk.'),
+        ),
+      );
+      return;
+    }
+    setState(() => _busy = true);
+    try {
+      await session.api.request(
+        'POST',
+        'wishlist/products/${widget.productId}/',
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Produk disimpan ke wishlist.')),
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    tooltip: 'Simpan ke wishlist',
+    onPressed: _busy ? null : _save,
+    icon: const Icon(Icons.favorite_border),
+  );
 }
 
 class _ProductImage extends StatelessWidget {

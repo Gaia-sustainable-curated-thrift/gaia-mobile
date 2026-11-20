@@ -24,7 +24,7 @@ GAIA Mobile membantu pengguna menemukan pakaian preloved dan menggunakan marketp
 
 | Modul | Cakupan | Endpoint |
 | --- | --- | --- |
-| User / Authentication | Kerangka masuk, daftar, profil/edit profil, wishlist, dan pengaturan keamanan | Route web sudah ada; endpoint DRF User belum tersedia, lihat [status User](#modul-user--checkpoint-1) |
+| User / Authentication | Autentikasi, profil, wishlist, dan keamanan akun | `/api/accounts/`; lihat [integrasi User](#modul-user-integrasi-mobile-dan-web) |
 | Product / Listing | Katalog dan detail produk | `GET /api/products/`, `GET /api/products/<id>/`; operasi tulis memerlukan autentikasi |
 | Chat / Messaging | Inbox dan percakapan | Dalam pengembangan |
 | Transaksi | Keranjang dan pesanan | Dalam pengembangan |
@@ -32,62 +32,72 @@ GAIA Mobile membantu pengguna menemukan pakaian preloved dan menggunakan marketp
 
 Data Product berasal dari endpoint Django REST Framework, bukan katalog statis dalam aplikasi.
 
-## Modul User — Checkpoint 1
+## Modul User: integrasi mobile dan web
 
 Penanggung jawab: **Danar Iqbal Abi Zaidan Suharso (2506534371)**.
-Kerangka mobile mengikuti cakupan [modul User pada Gaia web](https://github.com/Gaia-sustainable-curated-thrift/Gaia#modul-user--authentication-danar).
+Flutter memakai endpoint DRF `/api/accounts/` pada backend Django Gaia. Akun, profil, dan wishlist menggunakan tabel yang sama dengan web: perubahan profil/favorit dari salah satu aplikasi terlihat di aplikasi lain setelah dimuat ulang.
 
-- Tab **Akun** pada bottom navigation membuka halaman utama User.
-- Akun → Masuk → Reset password / Daftar.
-- Akun → Profil saya → Edit profil (nama, username, email read-only, telepon, kota, negara, dan placeholder foto).
-- Akun → Wishlist.
-- Akun → Pengaturan akun → Ganti password; tersedia placeholder verifikasi email, keluar, dan hapus akun.
-- Setiap subhalaman bisa kembali menggunakan tombol Back. Halaman dapat digulir saat layar kecil atau keyboard terbuka.
+Fitur terhubung:
 
-Ini adalah **kerangka UI**, bukan autentikasi aktif. Menu profil, wishlist, dan pengaturan dapat dibuka sebagai pratinjau tanpa login. Input tidak dikirim atau disimpan, tidak ada akun/sesi palsu, dan tombol aksi backend dinonaktifkan. Google login, upload foto, validasi server, session/token, dan operasi data menjadi pekerjaan integrasi berikutnya. My Products menggunakan modul Product, sedangkan My Orders menggunakan modul Transaksi; keduanya tetap di tab masing-masing pada kerangka ini.
+- Registrasi dan login menggunakan email atau username; validasi mengikuti form Django web.
+- Membaca/mengedit profil; email tetap read-only.
+- Menyimpan produk dari ikon hati di detail produk; melihat wishlist dengan pagination 12 item, menghapus, dan undo.
+- Mengirim ulang verifikasi email dan memperbarui status verifikasi.
+- Ganti password, meminta reset melalui email, logout dengan konfirmasi, serta hapus akun lokal dengan password, frasa `DELETE`, dan persetujuan. Backend menolak penghapusan saat ada pesanan aktif.
+- Error jaringan, validasi backend, loading, dan sesi dicabut ditampilkan pada UI. Halaman privat memerlukan login.
 
-### Status API User
+Login Google dan penggantian foto masih melalui web. Penghapusan akun tanpa password lokal memakai alur konfirmasi email di web; aplikasi menonaktifkan penghapusan untuk akun tersebut.
 
-Pemeriksaan kode Gaia web (`accounts/urls.py`, `accounts/forms.py`, dan `gaia/urls.py`) menemukan route berikut. Route ini melayani halaman/form Django dengan session dan CSRF, **bukan endpoint Django REST Framework** dan belum dipanggil dari Flutter.
+### Kontrak API User
 
-| Fitur | Route web yang sudah ada | Status mobile |
+Semua respons berupa JSON; operasi 204 tidak mempunyai body. Endpoint privat memakai header `Authorization: Token <token>`. Login/register mengembalikan `{token, user}`; `user` memuat `id`, `full_name`, `username`, `email`, `phone`, `city`, `country`, `avatar_url`, `email_verified`, dan `has_password`. Error validasi berbentuk `{field: [pesan]}` atau `{detail: pesan}`.
+
+| Metode | Endpoint | Data / fungsi |
 | --- | --- | --- |
-| Masuk / daftar / keluar | `/accounts/login/`, `/accounts/register/`, `/accounts/logout/` | Kerangka; belum terintegrasi |
-| Profil / edit profil | `/accounts/profile/`, `/accounts/profile/edit/` | Kerangka; belum terintegrasi |
-| Wishlist | `/accounts/wishlist/`, `/accounts/wishlist/<pk>/remove/`, `/accounts/wishlist/undo/` | Kerangka; belum terintegrasi |
-| Pengaturan / verifikasi | `/accounts/settings/`, `/accounts/verify/resend/` | Kerangka; belum terintegrasi |
-| Ganti / reset password | `/accounts/password/change/`, `/accounts/password/reset/` | Kerangka; belum terintegrasi |
-| Hapus akun | `/accounts/delete/` | Placeholder; belum terintegrasi |
+| POST | `/api/accounts/register/` | `full_name`, `email`, `password1`, `password2` |
+| POST | `/api/accounts/login/` | `username` (email atau username), `password` |
+| POST | `/api/accounts/logout/` | Mencabut token; 204 |
+| GET, PATCH | `/api/accounts/me/` | Profil sendiri; PATCH nama, username, phone, city, country |
+| DELETE | `/api/accounts/me/` | `password`, `confirmation: DELETE`, `acknowledge: true`; 204 |
+| GET | `/api/accounts/wishlist/?page=1` | `{count, next, previous, results}`; 12 item per halaman |
+| POST | `/api/accounts/wishlist/products/<product_id>/` | Menyimpan produk tersedia milik pengguna lain |
+| DELETE | `/api/accounts/wishlist/<item_id>/` | Soft delete item sendiri; 204 |
+| POST | `/api/accounts/wishlist/<item_id>/restore/` | Memulihkan item sendiri untuk undo |
+| POST | `/api/accounts/verify/resend/` | Mengirim email; cooldown 60 detik |
+| POST | `/api/accounts/password/change/` | `old_password`, `new_password1`, `new_password2`; masuk ulang setelah berhasil |
+| POST | `/api/accounts/password/reset/` | `email`; tautan email membuka form reset web |
 
-Usulan kontrak DRF berikut perlu disepakati dan diimplementasikan di repository backend; **belum tersedia atau terverifikasi berjalan**:
+Token disimpan di memori selama aplikasi berjalan; menutup aplikasi memerlukan login ulang. Password tidak disimpan. DRF menggunakan satu token per akun: logout mencabut token mobile akun tersebut pada seluruh perangkat, sedangkan sesi browser web tetap terpisah. Perubahan password dari mobile maupun web mencabut token mobile lama. Halaman web tetap menggunakan session dan proteksi CSRF.
 
-| Metode | Usulan endpoint | Kegunaan |
-| --- | --- | --- |
-| POST | `/api/accounts/register/` | Registrasi |
-| POST | `/api/accounts/login/` | Autentikasi |
-| POST | `/api/accounts/logout/` | Mengakhiri sesi |
-| GET, PATCH | `/api/accounts/me/` | Membaca/memperbarui profil sendiri |
-| GET | `/api/accounts/wishlist/` | Daftar favorit pengguna |
-| POST | `/api/accounts/wishlist/<product_id>/` | Menambah favorit |
-| DELETE | `/api/accounts/wishlist/<product_id>/` | Menghapus favorit |
-| POST | `/api/accounts/wishlist/undo/` | Membatalkan penghapusan terakhir |
-| POST | `/api/accounts/verify/resend/` | Mengirim ulang verifikasi |
-| POST | `/api/accounts/password/change/` | Mengganti password |
-| POST | `/api/accounts/password/reset/` | Meminta tautan pemulihan |
-| DELETE | `/api/accounts/me/` | Menghapus akun dengan konfirmasi |
+### Backend dan konfigurasi
 
-Backend perlu menetapkan kontrak JSON, mekanisme autentikasi, proteksi CSRF bila menggunakan session, error validasi, pagination wishlist, dan konfirmasi operasi sensitif sebelum integrasi. Endpoint verifikasi/reset bertoken juga perlu disepakati untuk alur tautan email.
+Backend pendamping sudah digabung melalui [Gaia PR #36](https://github.com/Gaia-sustainable-curated-thrift/Gaia/pull/36) dan [deploy PWS berhasil](https://github.com/Gaia-sustainable-curated-thrift/Gaia/actions/runs/44764616682) pada 20 November 2026. Endpoint User publik sudah merespons JSON; `/me/` dan `/wishlist/` menolak guest dengan 401, pemeriksaan token dummy mengembalikan 401 Invalid token (tabel token tersedia), dan katalog Product tetap merespons 200.
 
-**Status checkpoint:** halaman dan navigasi modul User sudah tersedia. Syarat checkpoint berupa endpoint DRF yang sudah berjalan **belum terpenuhi untuk User**. Status modul lain mengikuti pekerjaan masing-masing penanggung jawab. Poin Aturan Umum nomor 6 perlu dicocokkan dengan dokumen tugas lengkap karena tangkapan layar hanya memuat instruksi checkpoint.
+Untuk deployment baru, jalankan `python manage.py migrate` agar tabel `authtoken` bawaan DRF tersedia. Push branch fitur tidak otomatis deploy; workflow web melakukan deploy PWS dari `main`.
 
-### Verifikasi kerangka
+Default User: `https://danar-iqbal-gaia.pws.cs.ui.ac.id/api/accounts/`.
+Default Product tetap `https://danar-iqbal-gaia.pws.cs.ui.ac.id/api/products/`.
+Kedua konfigurasi menggunakan URL lengkap dengan trailing slash:
+
+```bash
+flutter run --dart-define=GAIA_USER_API_BASE_URL=http://10.0.2.2:8000/api/accounts/ --dart-define=GAIA_API_BASE_URL=http://10.0.2.2:8000/api/products/
+```
+
+Untuk perangkat fisik gunakan alamat server yang dapat dijangkau perangkat. Android release memiliki permission INTERNET; URL HTTPS publik adalah default. HTTP lokal hanya untuk pengembangan, dan dapat memerlukan konfigurasi cleartext khusus debug di perangkat.
+
+### Verifikasi
 
 ```bash
 flutter analyze
-flutter test
+flutter test --concurrency=1
+# Backend lokal terisolasi harus sudah berjalan dan sudah migrate.
+# Gunakan EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend untuk smoke test.
+dart run tool/user_api_smoke.dart http://127.0.0.1:8897/api/accounts/
 ```
 
-Pemeriksaan manual: buka tab Akun; kunjungi seluruh menu di atas; uji Back; buka keyboard di form dan gulir sampai bagian bawah. Tombol kirim/simpan harus tetap nonaktif dan tidak mengubah status login.
+Smoke test membuat akun sementara, menjalankan HTTP nyata dari Dart ke Django, memeriksa profil/wishlist serta pencabutan token setelah logout, lalu menghapus akun sementara. Hanya host localhost/127.0.0.1 diizinkan oleh script.
+
+Halaman/navigasi dan API User sudah terhubung; backend produksi sudah dideploy. Verifikasi registrasi/login/profil dilakukan menggunakan HTTP nyata terhadap database lokal terisolasi; pemeriksaan produksi dilakukan secara read-only tanpa mengubah akun pengguna. Pengiriman email ke inbox produksi belum diuji dan bergantung pada konfigurasi SMTP. Poin Aturan Umum nomor 6 tetap perlu dicocokkan dengan dokumen tugas lengkap.
 
 ## Alur integrasi data
 
