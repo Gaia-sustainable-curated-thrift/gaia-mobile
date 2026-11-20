@@ -71,7 +71,9 @@ Token disimpan di memori selama aplikasi berjalan; menutup aplikasi memerlukan l
 
 ### Backend dan konfigurasi
 
-Kode backend pendamping ada di [Gaia branch feat/user-mobile-api](https://github.com/Gaia-sustainable-curated-thrift/Gaia/tree/feat/user-mobile-api). **Backend harus digabung/deploy dan menjalankan `python manage.py migrate` sebelum URL publik dapat melayani endpoint baru.** Push branch fitur tidak otomatis deploy; workflow web melakukan deploy PWS dari `main`.
+Backend pendamping sudah digabung melalui [Gaia PR #36](https://github.com/Gaia-sustainable-curated-thrift/Gaia/pull/36) dan [deploy PWS berhasil](https://github.com/Gaia-sustainable-curated-thrift/Gaia/actions/runs/44764616682) pada 20 November 2026. Endpoint User publik sudah merespons JSON; `/me/` dan `/wishlist/` menolak guest dengan 401, pemeriksaan token dummy mengembalikan 401 Invalid token (tabel token tersedia), dan katalog Product tetap merespons 200.
+
+Untuk deployment baru, jalankan `python manage.py migrate` agar tabel `authtoken` bawaan DRF tersedia. Push branch fitur tidak otomatis deploy; workflow web melakukan deploy PWS dari `main`.
 
 Default User: `https://danar-iqbal-gaia.pws.cs.ui.ac.id/api/accounts/`.
 Default Product tetap `https://danar-iqbal-gaia.pws.cs.ui.ac.id/api/products/`.
@@ -95,7 +97,7 @@ dart run tool/user_api_smoke.dart http://127.0.0.1:8897/api/accounts/
 
 Smoke test membuat akun sementara, menjalankan HTTP nyata dari Dart ke Django, memeriksa profil/wishlist serta pencabutan token setelah logout, lalu menghapus akun sementara. Hanya host localhost/127.0.0.1 diizinkan oleh script.
 
-Checkpoint halaman/navigasi dan implementasi API User tersedia pada pasangan branch ini. Kesiapan URL produksi memerlukan merge/deploy backend serta konfigurasi SMTP untuk email nyata. Poin Aturan Umum nomor 6 tetap perlu dicocokkan dengan dokumen tugas lengkap.
+Halaman/navigasi dan API User sudah terhubung; backend produksi sudah dideploy. Verifikasi registrasi/login/profil dilakukan menggunakan HTTP nyata terhadap database lokal terisolasi; pemeriksaan produksi dilakukan secara read-only tanpa mengubah akun pengguna. Pengiriman email ke inbox produksi belum diuji dan bergantung pada konfigurasi SMTP. Poin Aturan Umum nomor 6 tetap perlu dicocokkan dengan dokumen tugas lengkap.
 
 ## Alur integrasi data
 
