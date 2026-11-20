@@ -26,7 +26,7 @@ GAIA Mobile membantu pengguna menemukan pakaian preloved dan menggunakan marketp
 | --- | --- | --- |
 | User / Authentication | Akun dan profil | Dalam pengembangan |
 | Product / Listing | Katalog dan detail produk | `GET /api/products/`, `GET /api/products/<id>/`; operasi tulis memerlukan autentikasi |
-| Chat / Messaging | Inbox dan percakapan | Dalam pengembangan |
+| Chat / Messaging | Inbox dan percakapan dengan seller atau Gaia Care | `GET /api/chat/conversations/` (`?q=`, `?filter=unread`), `GET /api/chat/conversations/<id>/`, `GET`/`POST /api/chat/conversations/<id>/messages/` (`?after=<id>`), `POST /api/chat/conversations/start/`; semua memerlukan autentikasi |
 | Transaksi | Keranjang dan pesanan | Dalam pengembangan |
 | Review & Rating | Review seller | Dalam pengembangan |
 
@@ -43,6 +43,8 @@ flutter run --dart-define=GAIA_API_BASE_URL=http://10.0.2.2:8000/api/products/
 ```
 
 Pada perangkat fisik, gunakan alamat IP komputer yang menjalankan Django.
+
+Modul Chat memakai `https://danar-iqbal-gaia.pws.cs.ui.ac.id/api/chat/` dan dapat diganti dengan `--dart-define=GAIA_CHAT_API_URL=http://10.0.2.2:8000/api/chat/`. Pengguna hanya dapat melihat percakapan yang diikutinya; tanpa login, halaman Chat menampilkan ajakan untuk masuk.
 
 ## Desain
 
