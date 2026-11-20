@@ -1,76 +1,122 @@
-# GAIA Mobile
+GAIA Mobile
 
-GAIA Mobile merupakan aplikasi marketplace thrift untuk membeli dan menjual pakaian bekas layak pakai. Aplikasi ini melanjutkan website Django GAIA dari Proyek Tengah Semester PBP Fasilkom UI ke aplikasi Flutter dengan lima modul: Akun, Produk, Transaksi, Chat, serta Review dan Rating.
+Aplikasi Flutter untuk marketplace thrifting GAIA. Aplikasi mobile mengambil data dari situs Django GAIA melalui Django REST Framework.
 
-GAIA mendukung circular fashion dengan membantu pengguna menemukan barang thrift, berkomunikasi dengan penjual, melakukan transaksi, dan memberikan penilaian setelah pembelian.
+## Anggota dan pembagian modul
 
-| Informasi | Tautan |
-| --- | --- |
-| Repository Flutter | [gaia-mobile](https://github.com/Gaia-sustainable-curated-thrift/gaia-mobile) |
-| Repository Django | [Gaia](https://github.com/Gaia-sustainable-curated-thrift/Gaia) |
-| Website Django di PWS | [Website GAIA](https://danar-iqbal-gaia.pws.cs.ui.ac.id) |
-| Desain Figma | [Desain GAIA](https://www.figma.com/design/gTTsLkfL1qaaPdEomnRfKf/Gaia?node-id=1-4) |
-| APK | Belum tersedia; tautan unduhan akan ditambahkan setelah Checkpoint 1. |
+| Anggota | NPM | Modul |
+| --- | --- | --- |
+| Danar Iqbal Abi Zaidan Suharso | 2506534371 | User / Authentication |
+| Kayla Kirana Ali Trimardhany | 2506603854 | Product / Listing |
+| I Gede Devadatta A.D. | 2506622481 | Chat / Messaging |
+| Salma Maharani | 2506586532 | Transaksi |
+| Keisha Janice Maulina Napitupulu | 2506551232 | Review & Rating |
 
-## Anggota kelompok
+## Deskripsi aplikasi dan aktor
 
-| Nama | NPM |
-| --- | --- |
-| Danar Iqbal Abi Zaidan Suharso | 2506534371 |
-| I Gede Devadatta A.D | 2506622481 |
-| Keisha Janice Maulina Napitupulu | 2506551232 |
-| Kayla Kirana Ali Trimardhany | 2506603854 |
-| Salma Maharani | 2506586532 |
+GAIA Mobile membantu pengguna menemukan pakaian preloved dan menggunakan marketplace Gaia.
 
-## Modul dan pembagian kerja
+- **Guest:** melihat katalog dan detail produk.
+- **Pengguna terdaftar:** mengelola akun/listing, wishlist, chat, transaksi, dan review sesuai hak akses.
+- **Admin/staff:** mengelola data dan menangani verifikasi pesanan sesuai izin.
 
-| Modul | Penanggung jawab | Cakupan pengembangan | Halaman Flutter |
-| --- | --- | --- | --- |
-| Akun dan Autentikasi | Danar | Registrasi, login/logout, profil, keamanan akun, dan wishlist. | `lib/pages/account_page.dart` |
-| Produk | Kayla | Katalog, detail produk, pengelolaan listing, foto, kategori, harga, kondisi, serta pencarian/filter produk. | `lib/pages/product_page.dart` |
-| Chat | Deva | Percakapan dan pesan antara pembeli dan penjual. | `lib/pages/chat_page.dart` |
-| Transaksi | Salma | Keranjang, checkout, pesanan, pembayaran, dan status transaksi. | `lib/pages/transaction_page.dart` |
-| Review dan Rating | Keisha | Ulasan dan rating penjual berdasarkan pesanan, helpful vote, balasan penjual, dan pelaporan ulasan. | `lib/pages/review_page.dart` |
+## Modul dan API
 
-Pada versi Flutter saat ini, kelima modul telah memiliki halaman kerangka yang terhubung melalui navigasi bawah di `lib/main.dart`. Kolom cakupan menjelaskan tanggung jawab pengembangan masing-masing anggota; fitur lengkap setiap modul belum seluruhnya diimplementasikan pada antarmuka Flutter. Halaman Review dan Rating masih berupa kerangka dan belum mengambil data dari API.
+| Modul | Cakupan | Endpoint |
+| --- | --- | --- |
+| User / Authentication | Autentikasi, profil, wishlist, dan keamanan akun | `/api/accounts/`; lihat [integrasi User](#modul-user-integrasi-mobile-dan-web) |
+| Product / Listing | Katalog dan detail produk | `GET /api/products/`, `GET /api/products/<id>/`; operasi tulis memerlukan autentikasi |
+| Chat / Messaging | Inbox dan percakapan | Dalam pengembangan |
+| Transaksi | Keranjang dan pesanan | Dalam pengembangan |
+| Review & Rating | Review dan rating seller berdasarkan pesanan | `/api/reviews/`; API DRF tersedia, integrasi halaman Flutter belum selesai. Lihat [integrasi Review](#modul-review-dan-rating). |
 
-## Peran pengguna
+Data Product berasal dari endpoint Django REST Framework, bukan katalog statis dalam aplikasi.
 
-| Aktor | Peran dan akses |
-| --- | --- |
-| Pengunjung atau guest | Melihat data publik, seperti katalog dan review, serta mendaftar atau login untuk menggunakan fitur pribadi. |
-| Pembeli atau buyer | Pengguna terautentikasi yang menyimpan wishlist, menghubungi penjual, melakukan transaksi, dan menulis review untuk pesanan yang memenuhi syarat. |
-| Penjual atau seller | Pengguna terautentikasi yang mengelola listing, berkomunikasi dengan pembeli, menerima pesanan, dan membalas review untuk tokonya. |
-| Admin | Mengelola data dan proses administrasi melalui backend Django, termasuk pemeriksaan pesanan dan laporan ulasan sesuai kewenangan. Antarmuka admin khusus di Flutter belum dibuat. |
+## Modul User: integrasi mobile dan web
 
-Pembeli dan penjual bukan jenis akun terpisah. Pengguna terdaftar dapat menjalankan kedua peran tersebut. Backend memeriksa autentikasi dan kepemilikan data pada setiap operasi yang memerlukannya.
+Penanggung jawab: **Danar Iqbal Abi Zaidan Suharso (2506534371)**.
+Flutter memakai endpoint DRF `/api/accounts/` pada backend Django Gaia. Akun, profil, dan wishlist menggunakan tabel yang sama dengan web: perubahan profil/favorit dari salah satu aplikasi terlihat di aplikasi lain setelah dimuat ulang.
 
-## Integrasi data mobile dan website melalui DRF
+Fitur terhubung:
 
-Flutter akan menggunakan web service Django REST Framework pada backend GAIA yang sama dengan website PWS. Data produk, akun, pesanan, dan review tetap dikelola oleh model serta database Django yang sudah ada. Flutter berkomunikasi melalui HTTP dengan request dan respons JSON, tanpa mengakses database secara langsung.
+- Registrasi dan login menggunakan email atau username; validasi mengikuti form Django web.
+- Membaca/mengedit profil; email tetap read-only.
+- Menyimpan produk dari ikon hati di detail produk; melihat wishlist dengan pagination 12 item, menghapus, dan undo.
+- Mengirim ulang verifikasi email dan memperbarui status verifikasi.
+- Ganti password, meminta reset melalui email, logout dengan konfirmasi, serta hapus akun lokal dengan password, frasa `DELETE`, dan persetujuan. Backend menolak penghapusan saat ada pesanan aktif.
+- Error jaringan, validasi backend, loading, dan sesi dicabut ditampilkan pada UI. Halaman privat memerlukan login.
 
-Alur berikut menjadi kontrak integrasi yang akan dihubungkan ke halaman Flutter. Endpoint Review dan Rating sudah diimplementasikan pada backend; pemanggilan endpoint dari halaman Flutter masih merupakan pekerjaan integrasi berikutnya.
+Login Google dan penggantian foto masih melalui web. Penghapusan akun tanpa password lokal memakai alur konfirmasi email di web; aplikasi menonaktifkan penghapusan untuk akun tersebut.
 
-1. Pengguna melakukan login melalui aplikasi mobile. Klien mengirim `username` dan `password` sebagai JSON ke `POST /api/accounts/login/`. Backend memvalidasi akun dan mengembalikan token autentikasi beserta data pengguna.
-2. Klien menggunakan token pada request pribadi melalui header `Authorization: Token <token>`. Endpoint publik, seperti daftar review, dapat dibaca tanpa login.
-3. Klien meminta data melalui endpoint DRF, misalnya `GET /api/reviews/seller/<seller_id>/`. Backend membaca database yang sama dengan website dan mengembalikan JSON.
-4. Flutter mengubah JSON menjadi model Dart dan menampilkannya pada widget. Daftar review membaca isi `results` serta mengikuti `next` dan `previous` untuk pagination. Antarmuka perlu menangani kondisi memuat, data kosong, dan request gagal.
-5. Untuk menulis review, klien mengambil pesanan yang eligible, lalu mengirim ID pesanan, rating, judul, dan komentar ke `POST /api/reviews/` dengan token pengguna.
-6. Backend memeriksa status serta kepemilikan pesanan, memvalidasi input, dan menyimpan review. Identitas reviewer berasal dari pengguna yang terautentikasi, sedangkan seller berasal dari pesanan; keduanya tidak ditentukan oleh input klien.
-7. Setelah berhasil, backend mengembalikan JSON review yang tersimpan. Klien memperbarui tampilan atau mengambil ulang data. Perubahan yang sama tersedia pada website setelah data dimuat ulang karena kedua aplikasi menggunakan backend yang sama.
+### Kontrak API User
 
-Pada kode backend lokal, API review mendukung `SessionAuthentication` dan `TokenAuthentication`. Dukungan token telah diperiksa menggunakan akun dan database pengujian terpisah. Perubahan dukungan token masih perlu disimpan ke repository backend dan dideploy sebelum dipakai pada PWS.
+Semua respons berupa JSON; operasi 204 tidak mempunyai body. Endpoint privat memakai header `Authorization: Token <token>`. Login/register mengembalikan `{token, user}`; `user` memuat `id`, `full_name`, `username`, `email`, `phone`, `city`, `country`, `avatar_url`, `email_verified`, dan `has_password`. Error validasi berbentuk `{field: [pesan]}` atau `{detail: pesan}`.
 
-Request mobile yang hanya menggunakan token tidak memerlukan cookie session atau token CSRF. Alur website yang memakai session tetap memerlukan perlindungan CSRF untuk operasi tulis. Penjelasan skema autentikasi tersedia pada [dokumentasi DRF](https://www.django-rest-framework.org/api-guide/authentication/).
+| Metode | Endpoint | Data / fungsi |
+| --- | --- | --- |
+| POST | `/api/accounts/register/` | `full_name`, `email`, `password1`, `password2` |
+| POST | `/api/accounts/login/` | `username` (email atau username), `password` |
+| POST | `/api/accounts/logout/` | Mencabut token; 204 |
+| GET, PATCH | `/api/accounts/me/` | Profil sendiri; PATCH nama, username, phone, city, country |
+| DELETE | `/api/accounts/me/` | `password`, `confirmation: DELETE`, `acknowledge: true`; 204 |
+| GET | `/api/accounts/wishlist/?page=1` | `{count, next, previous, results}`; 12 item per halaman |
+| POST | `/api/accounts/wishlist/products/<product_id>/` | Menyimpan produk tersedia milik pengguna lain |
+| DELETE | `/api/accounts/wishlist/<item_id>/` | Soft delete item sendiri; 204 |
+| POST | `/api/accounts/wishlist/<item_id>/restore/` | Memulihkan item sendiri untuk undo |
+| POST | `/api/accounts/verify/resend/` | Mengirim email; cooldown 60 detik |
+| POST | `/api/accounts/password/change/` | `old_password`, `new_password1`, `new_password2`; masuk ulang setelah berhasil |
+| POST | `/api/accounts/password/reset/` | `email`; tautan email membuka form reset web |
 
-### Alamat backend
+Token disimpan di memori selama aplikasi berjalan; menutup aplikasi memerlukan login ulang. Password tidak disimpan. DRF menggunakan satu token per akun: logout mencabut token mobile akun tersebut pada seluruh perangkat, sedangkan sesi browser web tetap terpisah. Perubahan password dari mobile maupun web mencabut token mobile lama. Halaman web tetap menggunakan session dan proteksi CSRF.
 
-| Lingkungan | Base URL |
-| --- | --- |
-| PWS | `https://danar-iqbal-gaia.pws.cs.ui.ac.id` |
-| Django lokal pada komputer pengembang | `http://127.0.0.1:8000` |
+### Backend dan konfigurasi
 
-Ketersediaan endpoint PWS perlu diperiksa setelah deployment berhasil. Respons JSON dari localhost tidak menjadi bukti bahwa versi yang sama sudah tersedia di server PWS.
+Backend pendamping sudah digabung melalui [Gaia PR #36](https://github.com/Gaia-sustainable-curated-thrift/Gaia/pull/36) dan [deploy PWS berhasil](https://github.com/Gaia-sustainable-curated-thrift/Gaia/actions/runs/44764616682) pada 20 November 2026. Endpoint User publik sudah merespons JSON; `/me/` dan `/wishlist/` menolak guest dengan 401, pemeriksaan token dummy mengembalikan 401 Invalid token (tabel token tersedia), dan katalog Product tetap merespons 200.
+
+Untuk deployment baru, jalankan `python manage.py migrate` agar tabel `authtoken` bawaan DRF tersedia. Push branch fitur tidak otomatis deploy; workflow web melakukan deploy PWS dari `main`.
+
+Default User: `https://danar-iqbal-gaia.pws.cs.ui.ac.id/api/accounts/`.
+Default Product tetap `https://danar-iqbal-gaia.pws.cs.ui.ac.id/api/products/`.
+Kedua konfigurasi menggunakan URL lengkap dengan trailing slash:
+
+```bash
+flutter run --dart-define=GAIA_USER_API_BASE_URL=http://10.0.2.2:8000/api/accounts/ --dart-define=GAIA_API_BASE_URL=http://10.0.2.2:8000/api/products/
+```
+
+Untuk perangkat fisik gunakan alamat server yang dapat dijangkau perangkat. Android release memiliki permission INTERNET; URL HTTPS publik adalah default. HTTP lokal hanya untuk pengembangan, dan dapat memerlukan konfigurasi cleartext khusus debug di perangkat.
+
+### Verifikasi
+
+```bash
+flutter analyze
+flutter test --concurrency=1
+# Backend lokal terisolasi harus sudah berjalan dan sudah migrate.
+# Gunakan EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend untuk smoke test.
+dart run tool/user_api_smoke.dart http://127.0.0.1:8897/api/accounts/
+```
+
+Smoke test membuat akun sementara, menjalankan HTTP nyata dari Dart ke Django, memeriksa profil/wishlist serta pencabutan token setelah logout, lalu menghapus akun sementara. Hanya host localhost/127.0.0.1 diizinkan oleh script.
+
+Halaman/navigasi dan API User sudah terhubung; backend produksi sudah dideploy. Verifikasi registrasi/login/profil dilakukan menggunakan HTTP nyata terhadap database lokal terisolasi; pemeriksaan produksi dilakukan secara read-only tanpa mengubah akun pengguna. Pengiriman email ke inbox produksi belum diuji dan bergantung pada konfigurasi SMTP. Poin Aturan Umum nomor 6 tetap perlu dicocokkan dengan dokumen tugas lengkap.
+
+## Modul Review dan Rating
+
+Penanggung jawab: **Keisha Janice Maulina Napitupulu (2506551232)**.
+
+Backend Django sudah menyediakan API DRF Review dan Rating, yang digabung melalui [Gaia PR #37](https://github.com/Gaia-sustainable-curated-thrift/Gaia/pull/37). API menggunakan model `Review`, `ReviewReport`, dan `AccountOrder` yang juga dipakai website, sehingga data review tersimpan pada backend yang sama.
+
+**Status backend:** API telah diimplementasikan. Sebanyak 102 pengujian modul reviews lolos, termasuk 28 pengujian API, pada pemeriksaan lokal.
+
+**Status Flutter:** halaman Review masih berupa kerangka dan belum memanggil API. Keterangan ini berlaku untuk integrasi antarmuka Review; endpoint backend sudah tersedia.
+
+### Alur integrasi Review
+
+1. Halaman Review mengambil data publik melalui `GET /api/reviews/` atau daftar review per seller, kemudian mem-parsing `results` menjadi model Dart untuk ditampilkan. `next` dan `previous` digunakan untuk pagination.
+2. Untuk fitur pribadi, aplikasi menggunakan identitas hasil login modul User. Pada kode lokal, API Review menerima header `Authorization: Token <token>` selain autentikasi session.
+3. Sebelum menulis review, klien mengambil pesanan eligible untuk seller terkait. Klien mengirim `order`, `rating`, `title`, `comment`, dan flag opsional melalui POST JSON. Reviewer berasal dari pengguna yang terautentikasi dan seller diturunkan dari pesanan.
+4. Backend memvalidasi kepemilikan dan status pesanan serta rating, menyimpan data, lalu mengembalikan JSON. Setelah berhasil, halaman mengambil ulang daftar dan summary agar perubahan tampil. Website membaca data yang sama setelah dimuat ulang.
+
+Tambahan dukungan token Review telah diverifikasi pada kode lokal menggunakan akun dan database pengujian terpisah. Perubahan token tersebut masih perlu dipublikasikan melalui repository backend dan deployment sebelum diandalkan pada PWS. Autentikasi session website tetap memerlukan cookie session dan CSRF untuk operasi tulis.
 
 ### Endpoint Review dan Rating
 
@@ -130,52 +176,33 @@ Contoh respons daftar kosong berstatus `200`:
 }
 ```
 
-## Menjalankan proyek
+## Alur integrasi data
 
-Gunakan Flutter SDK yang menyediakan Dart sesuai constraint `sdk: ^3.13.7` pada `pubspec.yaml`. Dari root repository Flutter, jalankan:
+Flutter mengirim request HTTP ke endpoint DRF di situs Django Gaia. Viewset mengambil atau mengubah data model, serializer mengirim JSON, lalu Flutter mem-parsing JSON menjadi model `Product` untuk ditampilkan di katalog dan detail. Perubahan listing melalui API dibatasi untuk pengguna terautentikasi dan pemilik listing.
 
-```sh
+Endpoint bawaan: `https://danar-iqbal-gaia.pws.cs.ui.ac.id/api/products/`. Untuk emulator Android dengan server Django lokal, jalankan:
+
+```bash
+flutter run --dart-define=GAIA_API_BASE_URL=http://10.0.2.2:8000/api/products/
+```
+
+Pada perangkat fisik, gunakan alamat IP komputer yang menjalankan Django.
+
+## Desain
+
+[Figma GAIA](https://www.figma.com/design/gTTsLkfL1qaaPdEomnRfKf/Gaia?node-id=1-4&t=S3z03qUIKvsz1lNL-1)
+
+## Menjalankan
+
+```bash
 flutter pub get
-flutter devices
 flutter run
 ```
 
-Pilih perangkat yang tersedia. Untuk memeriksa kode Dart, gunakan `flutter analyze`. Referensi perintah tersedia pada [dokumentasi Flutter CLI](https://docs.flutter.dev/reference/flutter-cli).
+## APK
 
-Pada root repository Django dengan virtual environment dan konfigurasi lokal yang sudah disiapkan:
+Tautan APK akan ditambahkan setelah rilis.
 
-```powershell
-.\env\Scripts\python.exe -m pip install -r requirements.txt
-.\env\Scripts\python.exe manage.py migrate
-.\env\Scripts\python.exe manage.py check
-.\env\Scripts\python.exe manage.py runserver
-```
+## AI Disclosure
 
-Endpoint lokal dapat diperiksa melalui [daftar review lokal](http://127.0.0.1:8000/api/reviews/). Endpoint baca publik tidak memerlukan username atau password.
-
-## Status Checkpoint 1
-
-| Bagian | Status pada versi ini |
-| --- | --- |
-| Kerangka lima halaman Flutter | Tersedia. |
-| Navigasi bawah antarmodul | Tersedia. |
-| API DRF Review dan Rating | Tersedia pada backend Django. |
-| Pengujian modul reviews | 102 pengujian lolos, termasuk 28 pengujian API, pada pemeriksaan lokal. |
-| Dukungan token API review | Tersedia dan terverifikasi pada kode lokal; perubahan masih perlu dipublikasikan ke backend. |
-| Integrasi data pada halaman Review Flutter | Belum diimplementasikan. |
-| Endpoint review pada PWS | Perlu dikonfirmasi setelah deployment versi yang sesuai. |
-| APK | Tautan dapat ditambahkan setelah Checkpoint 1. |
-
-Pengujian backend modul reviews dapat diulang dari root Django:
-
-```powershell
-.\env\Scripts\python.exe manage.py test reviews --noinput
-```
-
-Endpoint dan hasil pengujian API modul anggota lain didokumentasikan oleh penanggung jawab masing-masing.
-
-## Desain Figma dan APK
-
-Desain aplikasi tersedia pada [Figma GAIA](https://www.figma.com/design/gTTsLkfL1qaaPdEomnRfKf/Gaia?node-id=1-4). Tautan ini menjadi referensi desain bersama untuk pengembangan antarmuka.
-
-APK belum dipublikasikan. Tautan unduhan APK akan ditambahkan di bagian ini setelah tersedia; sesuai ketentuan Checkpoint 1, tautan tersebut boleh ditambahkan setelah checkpoint ini.
+OpenAI ChatGPT digunakan untuk membantu implementasi awal dan dokumentasi. Kode ditinjau serta diuji oleh pengembang; keputusan desain dan integrasi menjadi tanggung jawab tim.
