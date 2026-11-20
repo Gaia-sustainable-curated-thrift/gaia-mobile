@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/user_session.dart';
+
 import 'user/account_forms.dart';
 import 'user/account_sections.dart';
 import 'user/user_page.dart';
@@ -9,6 +11,7 @@ class AccountPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = UserScope.of(context).user;
     return UserPage(
       children: [
         const CircleAvatar(
@@ -17,50 +20,57 @@ class AccountPage extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Ruang preloved kamu',
+          user == null ? 'Ruang preloved kamu' : 'Halo, ${user.displayName}',
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 8),
         const Text('Kelola profil dan simpan barang favoritmu di Gaia.'),
         const SizedBox(height: 20),
-        FilledButton(
-          onPressed: () => openUserPage(context, const LoginPage()),
-          child: const Text('Masuk'),
-        ),
-        OutlinedButton(
-          onPressed: () => openUserPage(context, const RegisterPage()),
-          child: const Text('Buat akun'),
-        ),
-        const SizedBox(height: 24),
-        const Text('Jelajahi halaman akun'),
-        const SizedBox(height: 8),
-        Card(
-          child: Column(
-            children: [
-              _menu(
-                context,
-                Icons.person_outline,
-                'Profil saya',
-                'Identitas dan informasi kontak',
-                const ProfilePage(),
-              ),
-              _menu(
-                context,
-                Icons.favorite_border,
-                'Wishlist',
-                'Koleksi produk favorit',
-                const WishlistPage(),
-              ),
-              _menu(
-                context,
-                Icons.security_outlined,
-                'Pengaturan akun',
-                'Email, password, dan keamanan',
-                const AccountSettingsPage(),
-              ),
-            ],
+        if (user == null)
+          FilledButton(
+            onPressed: () => openUserPage(context, const LoginPage()),
+            child: const Text('Masuk'),
           ),
+        if (user == null)
+          OutlinedButton(
+            onPressed: () => openUserPage(context, const RegisterPage()),
+            child: const Text('Buat akun'),
+          ),
+        const SizedBox(height: 24),
+        Text(
+          user == null
+              ? 'Masuk untuk mengelola akun dan wishlist.'
+              : 'Akun Gaia kamu',
         ),
+        const SizedBox(height: 8),
+        if (user != null)
+          Card(
+            child: Column(
+              children: [
+                _menu(
+                  context,
+                  Icons.person_outline,
+                  'Profil saya',
+                  'Identitas dan informasi kontak',
+                  const ProfilePage(),
+                ),
+                _menu(
+                  context,
+                  Icons.favorite_border,
+                  'Wishlist',
+                  'Koleksi produk favorit',
+                  const WishlistPage(),
+                ),
+                _menu(
+                  context,
+                  Icons.security_outlined,
+                  'Pengaturan akun',
+                  'Email, password, dan keamanan',
+                  const AccountSettingsPage(),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
