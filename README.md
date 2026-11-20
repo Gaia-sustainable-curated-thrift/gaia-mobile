@@ -1,4 +1,4 @@
-GAIA Mobile
+# GAIA Mobile
 
 Aplikasi Flutter untuk marketplace thrifting GAIA. Aplikasi mobile mengambil data dari situs Django GAIA melalui Django REST Framework.
 
@@ -28,7 +28,7 @@ GAIA Mobile membantu pengguna menemukan pakaian preloved dan menggunakan marketp
 | Product / Listing | Katalog dan detail produk | `GET /api/products/`, `GET /api/products/<id>/`; operasi tulis memerlukan autentikasi |
 | Chat / Messaging | Inbox dan percakapan | Dalam pengembangan |
 | Transaksi | Keranjang dan pesanan | Dalam pengembangan |
-| Review & Rating | Review dan rating seller berdasarkan pesanan | `/api/reviews/`; API DRF tersedia, integrasi halaman Flutter belum selesai. Lihat [integrasi Review](#modul-review-dan-rating). |
+| Review & Rating | Review seller | Dalam pengembangan |
 
 Data Product berasal dari endpoint Django REST Framework, bukan katalog statis dalam aplikasi.
 
@@ -98,83 +98,6 @@ dart run tool/user_api_smoke.dart http://127.0.0.1:8897/api/accounts/
 Smoke test membuat akun sementara, menjalankan HTTP nyata dari Dart ke Django, memeriksa profil/wishlist serta pencabutan token setelah logout, lalu menghapus akun sementara. Hanya host localhost/127.0.0.1 diizinkan oleh script.
 
 Halaman/navigasi dan API User sudah terhubung; backend produksi sudah dideploy. Verifikasi registrasi/login/profil dilakukan menggunakan HTTP nyata terhadap database lokal terisolasi; pemeriksaan produksi dilakukan secara read-only tanpa mengubah akun pengguna. Pengiriman email ke inbox produksi belum diuji dan bergantung pada konfigurasi SMTP. Poin Aturan Umum nomor 6 tetap perlu dicocokkan dengan dokumen tugas lengkap.
-
-## Modul Review dan Rating
-
-Penanggung jawab: **Keisha Janice Maulina Napitupulu (2506551232)**.
-
-Backend Django sudah menyediakan API DRF Review dan Rating, yang digabung melalui [Gaia PR #37](https://github.com/Gaia-sustainable-curated-thrift/Gaia/pull/37). API menggunakan model `Review`, `ReviewReport`, dan `AccountOrder` yang juga dipakai website, sehingga data review tersimpan pada backend yang sama.
-
-**Status backend:** API telah diimplementasikan. Sebanyak 102 pengujian modul reviews lolos, termasuk 28 pengujian API, pada pemeriksaan lokal.
-
-**Status Flutter:** halaman Review masih berupa kerangka dan belum memanggil API. Keterangan ini berlaku untuk integrasi antarmuka Review; endpoint backend sudah tersedia.
-
-### Alur integrasi Review
-
-1. Halaman Review mengambil data publik melalui `GET /api/reviews/` atau daftar review per seller, kemudian mem-parsing `results` menjadi model Dart untuk ditampilkan. `next` dan `previous` digunakan untuk pagination.
-2. Untuk fitur pribadi, aplikasi menggunakan identitas hasil login modul User. Pada kode lokal, API Review menerima header `Authorization: Token <token>` selain autentikasi session.
-3. Sebelum menulis review, klien mengambil pesanan eligible untuk seller terkait. Klien mengirim `order`, `rating`, `title`, `comment`, dan flag opsional melalui POST JSON. Reviewer berasal dari pengguna yang terautentikasi dan seller diturunkan dari pesanan.
-4. Backend memvalidasi kepemilikan dan status pesanan serta rating, menyimpan data, lalu mengembalikan JSON. Setelah berhasil, halaman mengambil ulang daftar dan summary agar perubahan tampil. Website membaca data yang sama setelah dimuat ulang.
-
-Tambahan dukungan token Review telah diverifikasi pada kode lokal menggunakan akun dan database pengujian terpisah. Perubahan token tersebut masih perlu dipublikasikan melalui repository backend dan deployment sebelum diandalkan pada PWS. Autentikasi session website tetap memerlukan cookie session dan CSRF untuk operasi tulis.
-
-### Endpoint Review dan Rating
-
-Seluruh path berikut relatif terhadap base URL backend dan menggunakan trailing slash.
-
-| Metode | Endpoint | Fungsi dan akses |
-| --- | --- | --- |
-| GET | `/api/reviews/` | Daftar review publik dengan pagination. |
-| POST | `/api/reviews/` | Membuat review; memerlukan login dan pesanan eligible. |
-| GET | `/api/reviews/<id>/` | Detail review publik. |
-| PUT, PATCH | `/api/reviews/<id>/` | Mengedit review; hanya penulisnya. |
-| DELETE | `/api/reviews/<id>/` | Menghapus review; hanya penulisnya. |
-| GET | `/api/reviews/mine/` | Daftar review yang ditulis pengguna login. |
-| GET | `/api/reviews/seller/<seller_id>/` | Daftar review untuk penjual tertentu. |
-| GET | `/api/reviews/seller/<seller_id>/summary/` | Rata-rata, jumlah review, dan distribusi rating penjual. |
-| GET | `/api/reviews/seller/<seller_id>/eligible-orders/` | Pesanan pengguna yang memenuhi syarat untuk direview. |
-| POST | `/api/reviews/<id>/helpful/` | Toggle helpful; penulis dan penjual terkait tidak boleh memilih. |
-| POST, DELETE | `/api/reviews/<id>/reply/` | Menyimpan atau menghapus balasan; hanya penjual terkait. |
-| POST | `/api/reviews/<id>/report/` | Melaporkan review; penulis tidak boleh melaporkan review sendiri. |
-| GET | `/api/reviews/csrf/` | Mengambil token CSRF untuk klien yang memakai session. |
-
-Daftar review mendukung filter `seller` dan `rating`, pengurutan `sort=newest|helpful|rating`, serta pagination `page` dan `page_size`.
-
-### Aturan review
-
-- Rating harus berupa integer 1 sampai 5.
-- Pesanan harus berstatus `completed`, dimiliki pengguna yang login, memiliki penjual aktif, dan belum memiliki review.
-- Pengguna tidak dapat mereview dirinya sendiri. Satu pesanan hanya memiliki satu review pada satu waktu.
-- Input `reviewer` dan `seller` dari klien ditolak. Penulis, penjual, dan pesanan tidak dapat diganti melalui endpoint edit review.
-- Review anonim menyembunyikan identitas penulis. Identitas reviewer juga disembunyikan dari pengunjung yang belum login. Nomor ID pesanan hanya terlihat oleh penulis review.
-
-Contoh body `POST /api/reviews/` menggunakan ID pesanan ilustratif:
-
-```json
-{
-  "order": 42,
-  "rating": 5,
-  "title": "Penjual ramah",
-  "comment": "Komunikasi cepat dan barang sesuai deskripsi.",
-  "is_anonymous": false,
-  "is_friendly": true,
-  "is_responsive": true,
-  "is_trustworthy": true
-}
-```
-
-Respons berhasil pembuatan review berstatus `201` dan berisi objek review. Penghapusan review menghasilkan `204` tanpa body. Error validasi menghasilkan `400`; akses tanpa izin pada API review menghasilkan `403`; objek tidak ditemukan menghasilkan `404`.
-
-Contoh respons daftar kosong berstatus `200`:
-
-```json
-{
-  "count": 0,
-  "next": null,
-  "previous": null,
-  "results": []
-}
-```
 
 ## Alur integrasi data
 

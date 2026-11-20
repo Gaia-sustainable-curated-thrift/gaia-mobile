@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import 'pages/product_page.dart';
@@ -6,26 +5,41 @@ import 'pages/transaction_page.dart';
 import 'pages/chat_page.dart';
 import 'pages/account_page.dart';
 import 'pages/review_page.dart';
+import 'services/user_session.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final UserSession _session = UserSession();
+
+  @override
+  void dispose() {
+    _session.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'GAIA Mobile',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
+    return UserScope(
+      session: _session,
+      child: MaterialApp(
+        title: 'GAIA Mobile',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
+        home: const MainPage(),
       ),
-      home: const MainPage(),
     );
   }
 }

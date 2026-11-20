@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 class TransactionPage extends StatelessWidget {
@@ -5,25 +6,68 @@ class TransactionPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Transaksi Saya',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: DefaultTabController(
+        length: 4,
+        child: Column(
+          children: [
+            const TabBar(
+              isScrollable: true,
+              labelColor: Colors.green,
+              unselectedLabelColor: Colors.grey,
+              tabs: [
+                Tab(text: 'Semua'),
+                Tab(text: 'Menunggu'),
+                Tab(text: 'Dikirim'),
+                Tab(text: 'Selesai'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _emptyTransactions(),
+                  _emptyTransactions(),
+                  _emptyTransactions(),
+                  _emptyTransactions(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyTransactions() {
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             Icons.receipt_long_outlined,
-            size: 64,
-            color: Colors.green,
+            size: 72,
+            color: Colors.grey.shade400,
           ),
-          SizedBox(height: 16),
-          Text(
-            'Transaksi GAIA',
+          const SizedBox(height: 16),
+          const Text(
+            'Belum ada transaksi',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 8),
-          Text('Halaman modul Transaction'),
+          const SizedBox(height: 8),
+          const Text(
+            'Transaksi kamu akan muncul di sini.',
+            style: TextStyle(color: Colors.grey),
+          ),
         ],
       ),
     );
